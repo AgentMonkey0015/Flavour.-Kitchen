@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Order Management</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ede8 100%);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1f4d3a 0%, #2d6a4f 100%);
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(31, 77, 58, 0.25);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header button {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(10px);
+    }
+
+    header button:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    main {
+      padding: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 28px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: transform 0.2s;
+    }
+
+    .section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1f4d3a;
+    }
+
+    .count-badge {
+      background: #e8f5e9;
+      color: #2d6a4f;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e8ede8;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .progress {
+      height: 100%;
+      width: 40%;
+      background: linear-gradient(90deg, #ff6b35 0%, #f7931e 100%);
+      border-radius: 10px;
+      transition: width 0.4s ease;
+      box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+    }
+
+    .orders {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .order-card {
+      border: 2px solid #f0f4f0;
+      border-radius: 16px;
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfa 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .order-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ff6b35 0%, #f7931e 100%);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .order-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+      border-color: #2d6a4f;
+    }
+
+    .order-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .order-id {
+      font-weight: 700;
+      font-size: 18px;
+      color: #1f4d3a;
+      margin-bottom: 8px;
+    }
+
+    .order-details {
+      color: #5a6c57;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      margin-top: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    .pending { 
+      color: #d35400;
+      background: #fef3e6;
+    }
+    
+    .preparing { 
+      color: #2471a3;
+      background: #e8f4f8;
+    }
+    
+    .ready { 
+      color: #1e8449;
+      background: #e8f5e9;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(31, 77, 58, 0.6);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-content {
+      background: white;
+      padding: 32px;
+      border-radius: 24px;
+      max-width: 480px;
+      width: calc(100% - 32px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    .modal h3 {
+      margin: 0 0 20px;
+      font-size: 24px;
+      color: #1f4d3a;
+      font-weight: 700;
+    }
+
+    .items {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+      background: #f8faf8;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .items li {
+      margin-bottom: 12px;
+      font-size: 16px;
+      color: #2d3832;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .items li:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-total {
+      background: linear-gradient(135deg, #1f4d3a 0%, #2d6a4f 100%);
+      color: white;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      font-size: 18px;
+    }
+
+    .modal-total strong {
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .actions button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .actions button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .accept { 
+      background: linear-gradient(135deg, #2471a3 0%, #3498db 100%);
+      color: white;
+    }
+    
+    .complete { 
+      background: linear-gradient(135deg, #1e8449 0%, #27ae60 100%);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        padding: 20px;
+      }
+
+      .orders {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🍳 Flavour Kitchen</h1>
+  <button onclick="logout()">Logout</button>
+</header>
+
+<main>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>⏱️ Pending Orders</h2>
+      <span class="count-badge">1</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress"></div>
+    </div>
+
+    <div class="orders" id="pendingOrders">
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>👨‍🍳 In Progress</h2>
+      <span class="count-badge">1</span>
+    </div>
+    <div class="orders" id="preparingOrders">
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>✅ Completed</h2>
+      <span class="count-badge">1</span>
+    </div>
+    <div class="orders" id="completedOrders">
+    </div>
+  </section>
+
+</main>
+
+<!-- Order Modal -->
+<div class="modal" id="orderModal">
+  <div class="modal-content">
+    <h3>📋 Order #1023</h3>
+
+    <ul class="items">
+      <!-- Items will be injected here -->
+    </ul>
+
+    <div class="modal-total">
+      <strong>Total:</strong> ₦12,100
+    </div>
+
+    <div class="actions">
+      <button class="accept" onclick="updateStatus('preparing')">Accept Order</button>
+      <button class="complete" onclick="updateStatus('completed')">Mark Ready</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    query,
+    orderBy,
+    onSnapshot,
+    doc,
+    getDoc,
+    updateDoc
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCrtHNewzF3FQwMuDDta_TycgFbpgytscM",
+    authDomain: "flavour-app.firebaseapp.com",
+    projectId: "flavour-app",
+    storageBucket: "flavour-app.firebasestorage.app",
+    messagingSenderId: "689550413226",
+    appId: "1:689550413226:web:b1930dc2f35e1e7a656fd3",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // AUTH + WORKER GUARD
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return window.location.href = "login.html";
+
+    const snap = await getDoc(doc(db, "workers", user.uid));
+    if (!snap.exists() || snap.data().active !== true) {
+      await signOut(auth);
+      window.location.href = "login.html";
+    }
+  });
+
+  // LOGOUT
+  window.logout = async () => {
+    await signOut(auth);
+    window.location.href = "login.html";
+  };
+
+  const pendingEl = document.getElementById("pendingOrders");
+  const preparingEl = document.getElementById("preparingOrders");
+  const completedEl = document.getElementById("completedOrders");
+
+  const modal = document.getElementById("orderModal");
+  const modalTitle = modal.querySelector("h3");
+  const itemsList = modal.querySelector(".items");
+  const totalBox = modal.querySelector(".modal-total");
+
+  let activeOrderId = null;
+  const ordersCache = {};
+
+  function renderCard(order, id) {
+    return `
+      <div class="order-card" onclick="openOrder('${id}')">
+        <div class="order-id">Order #${id.slice(0,6)}</div>
+        <div class="order-details">${order.items.length} items • ₦${order.pricing.total}</div>
+        <div class="status ${order.status}">${order.status}</div>
+      </div>
+    `;
+  }
+
+  window.openOrder = (id) => {
+    const order = ordersCache[id];
+    if (!order) return;
+
+    activeOrderId = id;
+    modalTitle.textContent = `📋 Order #${id.slice(0,6)}`;
+    itemsList.innerHTML = "";
+
+    order.items.forEach(item => {
+      itemsList.innerHTML += `<li>${item.name} × ${item.qty}</li>`;
+    });
+
+    totalBox.innerHTML = `<strong>Total:</strong> ₦${order.pricing.total}`;
+    modal.style.display = "flex";
+  };
+
+  window.updateStatus = async (status) => {
+    if (!activeOrderId) return;
+
+    await updateDoc(doc(db, "orders", activeOrderId), { status });
+    modal.style.display = "none";
+  };
+
+  modal.addEventListener("click", e => {
+    if (e.target.id === "orderModal") modal.style.display = "none";
+  });
+
+  const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+
+  onSnapshot(q, snapshot => {
+    pendingEl.innerHTML = "";
+    preparingEl.innerHTML = "";
+    completedEl.innerHTML = "";
+
+    snapshot.forEach(docSnap => {
+      const order = docSnap.data();
+      ordersCache[docSnap.id] = order;
+      const html = renderCard(order, docSnap.id);
+
+      if (order.status === "pending") pendingEl.innerHTML += html;
+      else if (order.status === "preparing") preparingEl.innerHTML += html;
+      else if (order.status === "completed") completedEl.innerHTML += html;
+    });
+  });
+</script>
+
+</body>
+</html>

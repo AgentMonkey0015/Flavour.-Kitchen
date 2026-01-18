@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flavour Kitchen – Staff Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      background: #f5f3eb;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-box {
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: #1f4d3a;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+      font-size: 15px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1f4d3a;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .error {
+      color: #c0392b;
+      font-size: 14px;
+      margin-top: 8px;
+      display: none;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <h1>Flavour Kitchen</h1>
+
+    <form id="workerLoginForm">
+      <input type="email" id="workerId" placeholder="Worker ID (email)" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Log in</button>
+      <p id="loginError" class="error"></p>
+    </form>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCrtHNewzF3FQwMuDDta_TycgFbpgytscM",
+    authDomain: "flavour-app.firebaseapp.com",
+    projectId: "flavour-app",
+    storageBucket: "flavour-app.firebasestorage.app",
+    messagingSenderId: "689550413226",
+    appId: "1:689550413226:web:b1930dc2f35e1e7a656fd3",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const form = document.getElementById("workerLoginForm");
+  const errorEl = document.getElementById("loginError");
+  const button = form.querySelector("button");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorEl.style.display = "none";
+    button.disabled = true;
+
+    const email = document.getElementById("workerId").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+
+      const workerRef = doc(db, "workers", cred.user.uid);
+      const workerSnap = await getDoc(workerRef);
+
+      if (!workerSnap.exists() || workerSnap.data().active !== true) {
+        await auth.signOut();
+        throw new Error("NOT_WORKER");
+      }
+
+      window.location.href = "dashboard.html";
+
+    } catch (err) {
+      if (err.message === "NOT_WORKER") {
+        errorEl.textContent = "Access denied. Not a registered worker.";
+      } else if (err.code === "auth/invalid-credential") {
+        errorEl.textContent = "Invalid Worker ID or password.";
+      } else {
+        errorEl.textContent = "Login failed. Please try again.";
+      }
+      errorEl.style.display = "block";
+    }
+
+    button.disabled = false;
+  });
+</script>
+
+</body>
+</html>
